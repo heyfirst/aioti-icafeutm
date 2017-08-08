@@ -90,7 +90,6 @@ router.route('/menus').get(async (req, res) => {
     })
   } else {
     ingredients = ingredients.split(',')
-    console.log(ingredients)
     if(ingredients[0] !== '') {
       await foods.map(food => {
         ingredients.map(ingredient => {
@@ -130,8 +129,17 @@ router.route('/order').get((req, res) => {
 })
 
 
-router.route('/payment/:orderId').get((req, res) => {
+router.route('/payment/:orderId').get( async (req, res) => {
+  let orderId = req.params.orderId
+  let data = await firebase.orderRef.once('value').then(snapshot => snapshot.val())
+  let order = data[orderId]
+
+  order.payment = true
+
+  await firebase.orderRef.child(`/${orderId}`).update(order)
   
-  res.send('Payment ' + req.params.orderId)
+  res.json(order)
 })
+
+
 module.exports = router

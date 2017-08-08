@@ -74,26 +74,64 @@ router.route('/').get((req, res) => {
   res.send('Hi, iCafe UTM')
 })
 
-router.route('/order').get((req, res) => {
-  res.json(req.query)
-})
-
-router.route('/foods').get(async (req, res) => {
+router.route('/menus').get(async (req, res) => {
   let data = await firebase.foodRef.once('value').then(snapshot => snapshot.val())
-  
   const foods = Object.keys(data)
     .reverse()
     .map(key => data[key])
   
-  let manu = ''
-
-  await foods.map(f => {
-    console.log(f.name)
-    manu = manu.concat(f.name + ',')
-    console.log(manu)
-  })
+  let manu = []
   
-  res.send(manu)
+  ingredients = req.query.ingredients
+  
+  if(ingredients === undefined) {
+    await foods.map(food => {
+      manu.push(food.name)
+    })
+  } else {
+    ingredients = ingredients.split(',')
+    console.log(ingredients)
+    if(ingredients[0] !== '') {
+      await foods.map(food => {
+        ingredients.map(ingredient => {
+          if(food.ingredients.indexOf(ingredient) !== -1 && manu.indexOf(food.name) === -1){
+            manu.push(food.name)
+          }
+        })
+      })
+    } else {
+      await foods.map(food => {
+        manu.push(food.name)
+      })
+    }
+  }
+  
+  res.send(manu.join(','))
 })
 
+router.route('/order').get((req, res) => {
+
+  let order = {
+    table: req.query.table,
+    menus: [],
+    payment: false
+  }
+
+  menus = req.query.menus.split('|').map(menu => {
+    order.menus.push({
+      food: menu.split(',')[0],
+      quantity: menu.split(',')[1]
+    })
+  })
+
+  firebase.orderRef.push(order)
+
+  res.json(order)
+})
+
+
+router.route('/payment/:orderId').get((req, res) => {
+  
+  res.send('Payment ' + req.params.orderId)
+})
 module.exports = router

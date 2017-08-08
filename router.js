@@ -78,4 +78,22 @@ router.route('/order').get((req, res) => {
   res.json(req.query)
 })
 
+router.route('/foods').get(async (req, res) => {
+  let data = await firebase.foodRef.once('value').then(snapshot => snapshot.val())
+  
+  const foods = Object.keys(data)
+    .reverse()
+    .map(key => data[key])
+  
+  let manu = ''
+
+  await foods.map(f => {
+    console.log(f.name)
+    manu = manu.concat(f.name + ',')
+    console.log(manu)
+  })
+  
+  res.send(manu)
+})
+
 module.exports = router

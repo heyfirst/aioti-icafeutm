@@ -1,8 +1,7 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
-var NotificationSystem = require('react-notification-system');
-
+import NotificationSystem from 'react-notification-system'
 import { compose, withState, withHandlers } from 'recompose'
 
 /* global firebase */
@@ -21,6 +20,10 @@ class App extends Component {
     .orderByKey().limitToLast(500)
       .on('value', snapshot => {
         this.setState({ order: snapshot.val() })
+        this._notificationSystem.addNotification({
+          message: 'New order is comming.',
+          level: 'success'
+        });
       })
     await firebase.database().ref().child('/foods')
       .once('value').then(snapshot => {
@@ -35,8 +38,17 @@ class App extends Component {
       })
   }
 
+  componentDidMount() {
+    this._notificationSystem = this.refs.notificationSystem;
+  }
+
   render() {
-    return <KitchenCompose orderList={this.state.order} foods={this.state.foods}/>;
+    return (
+      <div>
+        <NotificationSystem ref="notificationSystem" />
+        <KitchenCompose orderList={this.state.order} foods={this.state.foods}/>
+      </div>
+    );
   }
 }
 
